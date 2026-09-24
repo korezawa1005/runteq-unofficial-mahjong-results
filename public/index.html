@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#173f36">
+  <meta name="description" content="四人麻雀の半荘結果と個人成績を記録するアプリ">
+  <title>半荘記録</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#stats" aria-label="半荘記録 ホーム"><span>半荘</span>記録</a>
+    <nav aria-label="メインメニュー">
+      <a href="#stats" data-nav="stats">個人成績</a>
+      <a href="#record" data-nav="record">対局を記録</a>
+      <a href="#members" data-nav="members">メンバー</a>
+    </nav>
+  </header>
+  <main id="app"><div class="loading">読み込んでいます…</div></main>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

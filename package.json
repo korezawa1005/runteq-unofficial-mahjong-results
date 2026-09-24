@@ -1,0 +1,14 @@
+{
+  "name": "hanchan-record",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "python3 -m unittest discover -s tests -p 'test_*.py' -v && node --test tests/test_stats.js",
+    "test:e2e": "node tests/e2e.mjs",
+    "test:admin": "node tests/admin-e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

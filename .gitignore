@@ -1,0 +1,17 @@
+# 対局データ・管理者設定・実行ログ
+/data/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Node.js / browser tests
+node_modules/
+test-results/
+playwright-report/
+
+# Local settings
+.env
+.env.*
+!.env.example
+.DS_Store
