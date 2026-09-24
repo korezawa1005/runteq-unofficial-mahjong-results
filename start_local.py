@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RUNTEQ麻雀サークル：成績表をターミナル終了後も動く状態で起動する。"""
+"""RUNTEQ非公式麻雀サークル：成績表をターミナル終了後も動く状態で起動する。"""
 import fcntl
 import json
 from pathlib import Path
@@ -28,7 +28,7 @@ def main():
     with (DATA / "start.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if healthy():
-            print(f"RUNTEQ麻雀サークル：成績表は起動しています: {URL}")
+            print(f"RUNTEQ非公式麻雀サークル：成績表は起動しています: {URL}")
             return 0
         with socket.socket() as sock:
             sock.settimeout(2)
@@ -50,7 +50,7 @@ def main():
                 break
             if healthy():
                 (DATA / "server.pid").write_text(str(process.pid) + "\n")
-                print(f"RUNTEQ麻雀サークル：成績表を起動しました: {URL}")
+                print(f"RUNTEQ非公式麻雀サークル：成績表を起動しました: {URL}")
                 return 0
             time.sleep(.1)
         if process.poll() is None:

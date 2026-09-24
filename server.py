@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RUNTEQ麻雀サークル：成績表."""
+"""RUNTEQ非公式麻雀サークル：成績表."""
 import argparse
 import datetime as dt
 import hashlib
@@ -349,7 +349,7 @@ def main():
         DB_PATH = Path(args.database)
     initialize()
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"RUNTEQ麻雀サークル：成績表: http://{args.host}:{args.port}", flush=True)
+    print(f"RUNTEQ非公式麻雀サークル：成績表: http://{args.host}:{args.port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
