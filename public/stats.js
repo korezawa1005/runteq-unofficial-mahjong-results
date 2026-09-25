@@ -32,10 +32,14 @@ export function rankSeries(playerId, games, limit = null) {
   return limit ? series.slice(-limit) : series;
 }
 
-export function leaderboard(players, games, metric = 'averageRank') {
+export function leaderboard(players, games, metric = 'averageRank', minimumGames = 0) {
   const descending = metric !== 'averageRank';
-  const rows = players.map(player => summarize(player, games));
+  const rows = players.map(player => {
+    const stats = summarize(player, games);
+    return {...stats, eligible: stats.count >= minimumGames && stats[metric] != null};
+  });
   rows.sort((a, b) => {
+    if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
     const left = a[metric];
     const right = b[metric];
     if (left == null && right == null) return a.player.name.localeCompare(b.player.name, 'ja');
@@ -48,10 +52,14 @@ export function leaderboard(players, games, metric = 'averageRank') {
   });
   let previous = null;
   let position = 0;
-  return rows.map((stats, index) => {
+  let eligibleIndex = 0;
+  return rows.map(stats => {
     const value = stats[metric];
-    if (value != null && value !== previous) position = index + 1;
-    previous = value;
-    return {...stats, position: value == null ? null : position};
+    if (stats.eligible) {
+      eligibleIndex += 1;
+      if (value !== previous) position = eligibleIndex;
+      previous = value;
+    }
+    return {...stats, position: stats.eligible ? position : null};
   });
 }

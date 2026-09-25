@@ -57,3 +57,18 @@ test('sorts rankings by the selected metric and keeps ties at the same rank', ()
   assert.deepEqual(topRate.map(row => row.player.id), ['a', 'b', 'c']);
   assert.deepEqual(topRate.map(row => row.position), [1, 1, 3]);
 });
+
+test('shows players below the minimum game count as reference records', () => {
+  const players = [{id:'a', name:'A'}, {id:'b', name:'B'}];
+  const games = [
+    {played_at:'2026-09-01T10:00', created_at:'1', results:[{player_id:'a', rank:1, score:40000}, {player_id:'b', rank:2, score:30000}]},
+    {played_at:'2026-09-02T10:00', created_at:'2', results:[{player_id:'b', rank:1, score:40000}]},
+  ];
+  const rows = leaderboard(players, games, 'topRate', 2);
+  assert.equal(rows[0].player.id, 'b');
+  assert.equal(rows[0].position, 1);
+  assert.equal(rows[0].eligible, true);
+  assert.equal(rows[1].player.id, 'a');
+  assert.equal(rows[1].position, null);
+  assert.equal(rows[1].eligible, false);
+});
