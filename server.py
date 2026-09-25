@@ -159,7 +159,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def serve_file(self, path):
-        files = {"/": "index.html", "/app.js": "app.js", "/stats.js": "stats.js", "/styles.css": "styles.css"}
+        files = {"/": "index.html", "/app.js": "app.js", "/stats.js": "stats.js", "/styles.css": "styles.css", "/assets/rantekun.jpg": "assets/rantekun.jpg"}
         name = files.get(path)
         if not name:
             raise AppError(404, "ページが見つかりません。")

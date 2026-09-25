@@ -2,6 +2,8 @@
 
 RUNTEQ非公式麻雀サークルの四人麻雀・半荘の順位と終了時点数を記録し、個人成績を表示するWebアプリです。
 
+画面内の「らんてくん」画像は、[RUNTEQ公式ブログ](https://runteq.jp/blog/programing_school/teacher/1059/)掲載素材を使用しています。
+
 ## 起動
 
 ```sh

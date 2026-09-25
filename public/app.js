@@ -37,7 +37,7 @@ function route() {
 }
 
 function empty(title, text, action = '') {
-  return `<section class="empty"><div class="empty-icon">四</div><h2>${title}</h2><p>${text}</p>${action}</section>`;
+  return `<section class="empty"><div class="empty-mascot"><img src="/assets/rantekun.jpg" alt=""></div><h2>${title}</h2><p>${text}</p>${action}</section>`;
 }
 
 function renderStats() {
@@ -105,7 +105,7 @@ function rankTrend(player) {
       <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="着順の推移">
         ${[1, 2, 3, 4].map(rank => `<line class="grid-line" x1="${left}" y1="${y(rank)}" x2="${width-right}" y2="${y(rank)}"></line><text class="axis-label" x="${left-10}" y="${y(rank)+4}" text-anchor="end">${rank}位</text>`).join('')}
         <polyline class="trend-line" points="${points}"></polyline>
-        ${series.map((item, index) => `<circle class="trend-point" cx="${x(index)}" cy="${y(item.value)}" r="${index === series.length - 1 ? 5 : 3}"><title>${item.date}・${item.game}半荘目：${item.value}位</title></circle>`).join('')}
+        ${series.map((item, index) => `<circle class="trend-point trend-rank-${item.value}" cx="${x(index)}" cy="${y(item.value)}" r="${index === series.length - 1 ? 5 : 3}"><title>${item.date}・${item.game}半荘目：${item.value}位</title></circle>`).join('')}
         ${labelIndexes.map(index => `<text class="axis-label x-label" x="${x(index)}" y="${height-12}" text-anchor="middle">${series[index].game}半荘</text>`).join('')}
       </svg>
     </div>

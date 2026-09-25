@@ -6,17 +6,24 @@
   <meta name="theme-color" content="#173f36">
   <meta name="description" content="RUNTEQ非公式麻雀サークルの半荘結果と個人成績を記録するアプリ">
   <title>RUNTEQ非公式麻雀サークル：成績表</title>
+  <link rel="icon" type="image/jpeg" href="/assets/rantekun.jpg">
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="#stats" aria-label="RUNTEQ非公式麻雀サークル：成績表 ホーム"><span>RUNTEQ</span>非公式麻雀サークル：成績表</a>
-    <nav aria-label="メインメニュー">
-      <a href="#stats" data-nav="stats">個人成績</a>
-      <a href="#record" data-nav="record">対局を記録</a>
-      <a href="#members" data-nav="members">メンバー</a>
-    </nav>
+    <a class="brand" href="#stats" aria-label="RUNTEQ非公式麻雀サークル：成績表 ホーム">
+      <span class="brand-mark">R</span>
+      <span class="brand-copy"><b>RUNTEQ <em>非公式</em></b><small>麻雀サークル：成績表</small></span>
+    </a>
+    <div class="header-right">
+      <img class="header-mascot" src="/assets/rantekun.jpg" alt="らんてくん">
+      <nav aria-label="メインメニュー">
+        <a href="#stats" data-nav="stats"><span aria-hidden="true">▦</span>個人成績</a>
+        <a href="#record" data-nav="record"><span aria-hidden="true">＋</span>対局を記録</a>
+        <a href="#members" data-nav="members"><span aria-hidden="true">♟</span>メンバー</a>
+      </nav>
+    </div>
   </header>
   <main id="app"><div class="loading">読み込んでいます…</div></main>
   <div id="toast" role="status" aria-live="polite"></div>
