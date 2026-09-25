@@ -48,3 +48,9 @@ npm run deploy
 ```
 
 `scripts/export_d1.py` はローカルSQLiteからメンバー、対局、結果、管理者PIN・共通PINのハッシュだけを移行用SQLへ出力します。ログインセッションとPIN入力履歴は移行しません。生成ファイルは `data/` 内に保存され、Gitには追加されません。
+
+メンバーとPIN設定だけを引き継ぎ、対局・結果をまっさらにする場合は次のように出力します。
+
+```sh
+python3 scripts/export_d1.py --without-results --output data/d1-without-results.sql
+```

@@ -28,14 +28,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--database", default=ROOT / "data" / "results.sqlite3", type=Path)
     parser.add_argument("--output", default=ROOT / "data" / "d1-import.sql", type=Path)
+    parser.add_argument("--without-results", action="store_true", help="メンバーとPINだけを出力し、対局・結果を移行しない")
     args = parser.parse_args()
     db = sqlite3.connect(args.database)
     db.row_factory = sqlite3.Row
     try:
         statements = ["PRAGMA foreign_keys=ON;"]
         statements += insert("players", ["id", "name", "created_at", "archived"], db.execute("SELECT id,name,created_at,archived FROM players ORDER BY created_at"))
-        statements += insert("games", ["id", "played_at", "created_at"], db.execute("SELECT id,played_at,created_at FROM games ORDER BY played_at,created_at"))
-        statements += insert("results", ["game_id", "player_id", "rank", "score"], db.execute("SELECT game_id,player_id,rank,score FROM results ORDER BY game_id,rank"))
+        if not args.without_results:
+            statements += insert("games", ["id", "played_at", "created_at"], db.execute("SELECT id,played_at,created_at FROM games ORDER BY played_at,created_at"))
+            statements += insert("results", ["game_id", "player_id", "rank", "score"], db.execute("SELECT game_id,player_id,rank,score FROM results ORDER BY game_id,rank"))
         statements += insert("settings", ["key", "value"], db.execute("SELECT key,value FROM settings WHERE key IN ('admin_pin','access_pin') ORDER BY key"))
     finally:
         db.close()
