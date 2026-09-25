@@ -1,4 +1,4 @@
-import {rankSeries, summarize} from './stats.js';
+import {leaderboard, rankSeries, summarize} from './stats.js';
 
 const app = document.querySelector('#app');
 const toast = document.querySelector('#toast');
@@ -82,19 +82,21 @@ function renderStats() {
   const {params} = hashInfo();
   const year = selectedYear(params);
   const view = params.get('view') === 'list' ? 'list' : 'personal';
+  const rankingMetrics = ['averageRank', 'topRate', 'rentaiRate', 'avoidLastRate', 'avoidBustRate'];
+  const sort = rankingMetrics.includes(params.get('sort')) ? params.get('sort') : 'averageRank';
   const selectedId = params.get('player') || state.players[0].id;
   const player = state.players.find(item => item.id === selectedId) || state.players[0];
   const games = gamesForYear(year);
   app.innerHTML = `
     <section class="page-head stats-head">
-      <div><p class="eyebrow">RECORDS</p><h1>${view === 'list' ? '成績一覧' : '個人成績'}</h1><p>${year === 'all' ? 'すべての' : `${year}年の`}半荘記録を集計しています。</p></div>
+      <div><p class="eyebrow">RECORDS</p><h1>${view === 'list' ? 'ランキング' : '個人成績'}</h1><p>${year === 'all' ? 'すべての' : `${year}年の`}半荘記録を集計しています。</p></div>
       <div class="head-filters">${yearControl(year)}${view === 'personal' ? `<label class="filter-control"><span>メンバー</span><select id="stats-player">${state.players.map(item => `<option value="${item.id}" ${item.id === player.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label>` : ''}</div>
     </section>
-    <div class="view-switch" role="group" aria-label="成績表示"><a class="${view === 'personal' ? 'active' : ''}" href="#${queryHash('stats', {year, player: player.id})}">個人成績</a><a class="${view === 'list' ? 'active' : ''}" href="#${queryHash('stats', {view: 'list', year})}">成績一覧</a></div>
-    ${view === 'list' ? comparisonView(games, year) : personalView(player, games)}
+    <div class="view-switch" role="group" aria-label="成績表示"><a class="${view === 'personal' ? 'active' : ''}" href="#${queryHash('stats', {year, player: player.id})}">個人成績</a><a class="${view === 'list' ? 'active' : ''}" href="#${queryHash('stats', {view: 'list', year, sort})}">ランキング</a></div>
+    ${view === 'list' ? comparisonView(games, year, sort) : personalView(player, games)}
   `;
   document.querySelector('#year-filter').addEventListener('change', event => {
-    location.hash = queryHash('stats', {view: view === 'list' ? 'list' : null, year: event.target.value, player: view === 'personal' ? player.id : null});
+    location.hash = queryHash('stats', {view: view === 'list' ? 'list' : null, year: event.target.value, player: view === 'personal' ? player.id : null, sort: view === 'list' ? sort : null});
   });
   document.querySelector('#stats-player')?.addEventListener('change', event => {
     location.hash = queryHash('stats', {year, player: event.target.value});
@@ -137,13 +139,22 @@ function rankTrend(player, games) {
       ${labelIndexes.map(index => `<text class="axis-label x-label" x="${x(index)}" y="${height-12}" text-anchor="middle">${series[index].game}半荘</text>`).join('')}</svg></div><p class="chart-note">選択期間内の直近10半荘で取った着順です。上に近いほど良い成績です。</p></section>`;
 }
 
-function comparisonView(games, year) {
-  const rows = state.players.map(player => summarize(player, games)).sort((a, b) => {
-    if (a.averageRank == null) return 1;
-    if (b.averageRank == null) return -1;
-    return a.averageRank - b.averageRank || b.count - a.count;
-  });
-  return `<section class="panel comparison-panel"><div class="table-scroll"><table class="comparison-table"><thead><tr><th>順位</th><th>メンバー</th><th>対局数</th><th>平均着順</th><th>トップ率</th><th>連対率</th><th>ラス回避率</th><th>飛び回避率</th></tr></thead><tbody>${rows.map((stats, index) => `<tr class="${stats.count ? '' : 'no-record'}"><td>${stats.count ? index + 1 : '—'}</td><th><a href="#${queryHash('stats', {player: stats.player.id, year})}">${esc(stats.player.name)}</a></th><td>${stats.count}</td><td>${rankValue(stats.averageRank)}</td><td>${percent(stats.topRate)}</td><td>${percent(stats.rentaiRate)}</td><td>${percent(stats.avoidLastRate)}</td><td>${percent(stats.avoidBustRate)}</td></tr>`).join('')}</tbody></table></div></section>`;
+function comparisonView(games, year, sort) {
+  const metrics = {
+    averageRank: {label:'平均着順', short:'平均着順', value:stats => `${rankValue(stats.averageRank)}位`},
+    topRate: {label:'トップ率', short:'トップ率', value:stats => percent(stats.topRate)},
+    rentaiRate: {label:'連対率', short:'連対率', value:stats => percent(stats.rentaiRate)},
+    avoidLastRate: {label:'ラス回避率', short:'ラス回避', value:stats => percent(stats.avoidLastRate)},
+    avoidBustRate: {label:'飛び回避率', short:'飛び回避', value:stats => percent(stats.avoidBustRate)},
+  };
+  const rows = leaderboard(state.players, games, sort);
+  const leaders = rows.filter(row => row.count).slice(0, 3);
+  const metric = metrics[sort];
+  const metricLinks = Object.entries(metrics).map(([key, item]) => `<a class="${key === sort ? 'active' : ''}" aria-current="${key === sort ? 'true' : 'false'}" href="#${queryHash('stats', {view:'list', year, sort:key})}">${item.short}</a>`).join('');
+  const podium = leaders.length ? `<section class="ranking-podium">${leaders.map(stats => `<article class="podium-card place-${stats.position}"><span class="podium-rank">${stats.position}<small>位</small></span><div><p>${esc(stats.player.name)}</p><strong>${metric.value(stats)}</strong><small>${stats.count}半荘</small></div></article>`).join('')}</section>` : '';
+  const active = key => key === sort ? 'active-metric' : '';
+  return `<section class="ranking-tools"><div><p class="eyebrow">RANK BY</p><h2>${metric.label}ランキング</h2></div><nav class="metric-switch" aria-label="ランキング基準">${metricLinks}</nav></section>${podium}
+    <section class="panel comparison-panel"><div class="table-scroll"><table class="comparison-table"><thead><tr><th>順位</th><th>メンバー</th><th>対局数</th><th class="${active('averageRank')}">平均着順</th><th class="${active('topRate')}">トップ率</th><th class="${active('rentaiRate')}">連対率</th><th class="${active('avoidLastRate')}">ラス回避率</th><th class="${active('avoidBustRate')}">飛び回避率</th></tr></thead><tbody>${rows.map(stats => `<tr class="${stats.count ? '' : 'no-record'}"><td><span class="table-rank rank-${stats.position || 0}">${stats.position ?? '—'}</span></td><th><a href="#${queryHash('stats', {player:stats.player.id, year})}">${esc(stats.player.name)}</a></th><td>${stats.count}</td><td class="${active('averageRank')}">${rankValue(stats.averageRank)}</td><td class="${active('topRate')}">${percent(stats.topRate)}</td><td class="${active('rentaiRate')}">${percent(stats.rentaiRate)}</td><td class="${active('avoidLastRate')}">${percent(stats.avoidLastRate)}</td><td class="${active('avoidBustRate')}">${percent(stats.avoidBustRate)}</td></tr>`).join('')}</tbody></table></div></section>`;
 }
 
 function gameForm(game = null) {

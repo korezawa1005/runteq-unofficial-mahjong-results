@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rankSeries, summarize} from '../public/stats.js';
+import {leaderboard, rankSeries, summarize} from '../public/stats.js';
 
 const player = {id: 'a', name: 'A'};
 const game = (day, rank, score, created) => ({played_at: day, created_at: created, results: [{player_id: 'a', rank, score}]});
@@ -38,4 +38,22 @@ test('limits the rank chart to the latest ten games', () => {
   assert.equal(series[0].game, 3);
   assert.equal(series.at(-1).game, 12);
   assert.equal(series.at(-1).value, 3);
+});
+
+test('sorts rankings by the selected metric and keeps ties at the same rank', () => {
+  const players = ['a', 'b', 'c'].map(id => ({id, name: id.toUpperCase()}));
+  const games = [
+    {played_at:'2026-09-01T10:00', created_at:'1', results:[
+      {player_id:'a', rank:1, score:40000}, {player_id:'b', rank:2, score:30000}, {player_id:'c', rank:3, score:20000},
+    ]},
+    {played_at:'2026-09-02T10:00', created_at:'2', results:[
+      {player_id:'b', rank:1, score:40000}, {player_id:'a', rank:2, score:30000}, {player_id:'c', rank:3, score:20000},
+    ]},
+  ];
+  const average = leaderboard(players, games, 'averageRank');
+  assert.deepEqual(average.map(row => row.player.id), ['a', 'b', 'c']);
+  assert.deepEqual(average.map(row => row.position), [1, 1, 3]);
+  const topRate = leaderboard(players, games, 'topRate');
+  assert.deepEqual(topRate.map(row => row.player.id), ['a', 'b', 'c']);
+  assert.deepEqual(topRate.map(row => row.position), [1, 1, 3]);
 });

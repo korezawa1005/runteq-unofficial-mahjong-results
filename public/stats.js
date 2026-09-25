@@ -31,3 +31,27 @@ export function rankSeries(playerId, games, limit = null) {
   }));
   return limit ? series.slice(-limit) : series;
 }
+
+export function leaderboard(players, games, metric = 'averageRank') {
+  const descending = metric !== 'averageRank';
+  const rows = players.map(player => summarize(player, games));
+  rows.sort((a, b) => {
+    const left = a[metric];
+    const right = b[metric];
+    if (left == null && right == null) return a.player.name.localeCompare(b.player.name, 'ja');
+    if (left == null) return 1;
+    if (right == null) return -1;
+    if (left !== right) return descending ? right - left : left - right;
+    if (a.count !== b.count) return b.count - a.count;
+    if (a.averageRank !== b.averageRank) return (a.averageRank ?? 99) - (b.averageRank ?? 99);
+    return a.player.name.localeCompare(b.player.name, 'ja');
+  });
+  let previous = null;
+  let position = 0;
+  return rows.map((stats, index) => {
+    const value = stats[metric];
+    if (value != null && value !== previous) position = index + 1;
+    previous = value;
+    return {...stats, position: value == null ? null : position};
+  });
+}
