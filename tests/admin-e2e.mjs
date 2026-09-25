@@ -23,29 +23,41 @@ try {
   await page.locator('#admin-logout').click();
   await page.waitForSelector('#admin-login');
   assert.equal(await page.locator('#member-form').count(), 0);
-  await page.click('a[href="#record"]');
-  await page.waitForSelector('#game-form');
-  await page.locator('#game-form button[type=submit]').click();
-  await page.waitForSelector('.stats-grid');
+  assert.equal(await page.locator('a[href="#record"]').isHidden(), true);
+  await page.goto(`${base}/#record`);
+  await page.waitForSelector('.empty h2');
+  assert.equal(await page.locator('.empty h2').textContent(), '対局の記録は管理者専用です');
+  assert.equal(await page.locator('#game-form').count(), 0);
 
-  await page.click('a[href="#record"]');
-  await page.waitForSelector('.history');
-  assert.equal(await page.locator('[data-delete]').count(), 0);
+  const outsider = await browser.newContext();
+  const publicState = await (await outsider.request.get(`${base}/api/state`)).json();
+  const gameResponse = await outsider.request.post(`${base}/api/games`, {
+    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'HanchanRecord'},
+    data: {
+      played_at: '2026-09-25T12:00',
+      results: publicState.players.slice(0, 4).map((player, index) => ({player_id: player.id, rank: index + 1, score: [40000, 30000, 20000, 10000][index]})),
+    },
+  });
+  assert.equal(gameResponse.status(), 403);
   await page.click('a[href="#members"]');
   await page.locator('#admin-login [name=pin]').fill('2468');
   await page.locator('#admin-login button[type=submit]').click();
   await page.waitForSelector('#member-form');
+  assert.equal(await page.locator('a[href="#record"]').isVisible(), true);
+  await page.click('a[href="#record"]');
+  await page.waitForSelector('#game-form');
+  await page.locator('#game-form button[type=submit]').click();
+  await page.waitForSelector('.stats-grid');
   await page.click('a[href="#history"]');
   await page.waitForSelector('[data-delete]');
 
-  const outsider = await browser.newContext();
   const response = await outsider.request.post(`${base}/api/players`, {
     headers: {'Content-Type': 'application/json', 'X-Requested-With': 'HanchanRecord'},
     data: {name: '拒否される名前'},
   });
   assert.equal(response.status(), 403);
   await outsider.close();
-  console.log('管理者権限ブラウザテスト: 10項目 OK');
+  console.log('管理者権限ブラウザテスト: 13項目 OK');
 } finally {
   await browser.close();
 }

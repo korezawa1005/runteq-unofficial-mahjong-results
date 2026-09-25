@@ -314,6 +314,7 @@ async function handleApi(request, env) {
     return json(200, {ok:true});
   }
   if (path === '/api/games' && method === 'POST') {
+    requireAdmin(auth);
     const body = await readJson(request);
     const playedAt = validatePlayedAt(body.played_at);
     const rows = await validateResults(env.DB, body.results);

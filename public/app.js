@@ -39,6 +39,7 @@ function notify(message, error = false) {
 }
 
 function route() {
+  syncNavigation();
   if (state.accessConfigured && !state.hasAccess) {
     document.body.classList.add('access-locked');
     document.querySelectorAll('[data-nav]').forEach(link => link.classList.remove('active'));
@@ -52,6 +53,12 @@ function route() {
   else if (page === 'history') renderHistory();
   else if (page === 'members') renderMembers();
   else renderStats();
+}
+
+function syncNavigation() {
+  const recordLink = document.querySelector('[data-nav="record"]');
+  if (recordLink) recordLink.hidden = !state.isAdmin;
+  document.body.classList.toggle('admin-mode', state.isAdmin);
 }
 
 function empty(title, text, action = '') {
@@ -105,7 +112,8 @@ function renderStats() {
 
 function personalView(player, games) {
   const stats = summarize(player, games);
-  return stats.count ? statsView(stats, games) : empty(`${esc(player.name)}さんの記録はありません`, '選択した期間に半荘を記録すると、ここに成績が表示されます。', '<a class="button primary" href="#record">対局を記録</a>');
+  const action = state.isAdmin ? '<a class="button primary" href="#record">対局を記録</a>' : '';
+  return stats.count ? statsView(stats, games) : empty(`${esc(player.name)}さんの記録はありません`, '選択した期間に管理者が半荘を記録すると、ここに成績が表示されます。', action);
 }
 
 function card(label, value, suffix = '') {
@@ -175,6 +183,10 @@ function gameForm(game = null) {
 }
 
 function renderRecord() {
+  if (!state.isAdmin) {
+    app.innerHTML = empty('対局の記録は管理者専用です', '管理者PINでロックを解除すると、半荘の結果を登録できます。', '<a class="button primary" href="#members">管理者ロックを解除</a>');
+    return;
+  }
   const activePlayers = state.players.filter(player => !player.archived);
   if (activePlayers.length < 4) {
     const action = state.isAdmin ? '<a class="button primary" href="#members">メンバーを登録</a>' : '<a class="button primary" href="#members">管理者ロックを解除</a>';
@@ -310,7 +322,10 @@ function memberRow(item, index) {
   return `<div class="member-row admin-member-row ${item.archived ? 'archived' : ''}" data-player="${item.id}"><i>${index + 1}</i><label><span class="sr-only">メンバー名</span><input value="${esc(item.name)}" maxlength="20"></label><div class="member-actions"><button type="button" data-save-player="${item.id}">名前を保存</button><button type="button" data-toggle-player="${item.id}">${item.archived ? '再表示' : '非表示'}</button></div></div>`;
 }
 
-async function refreshState() { state = await api('/api/state'); }
+async function refreshState() {
+  state = await api('/api/state');
+  syncNavigation();
+}
 
 async function loginAccess(event) {
   event.preventDefault();

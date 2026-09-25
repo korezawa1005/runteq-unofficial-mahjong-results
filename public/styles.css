@@ -42,3 +42,6 @@ main{padding-top:48px}.page-head{position:relative;padding-bottom:18px;border-bo
   .access-locked .site-header nav{display:none}.access-locked{padding-bottom:0}.access-gate{margin-top:0;padding:30px 20px}
 }
 @media(max-width:420px){.head-filters{grid-template-columns:1fr}.form-actions{flex-direction:column-reverse}.form-actions .button{width:100%}}
+
+.site-header nav a[hidden]{display:none}
+@media(max-width:760px){.site-header nav{grid-template-columns:repeat(3,1fr)}.admin-mode .site-header nav{grid-template-columns:repeat(4,1fr)}}

@@ -471,6 +471,7 @@ class Handler(BaseHTTPRequestHandler):
                         raise AppError(409, "同じ名前のメンバーが登録されています。")
                     return self.send_json(200, {"ok": True})
                 if path == "/api/games" and self.command == "POST":
+                    self.require_admin(db)
                     body = read_json(self)
                     played_at = validate_played_at(body.get("played_at"))
                     rows = validate_results(db, body.get("results"))
