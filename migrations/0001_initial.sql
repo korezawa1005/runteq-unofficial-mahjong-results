@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS players(
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL,
+  archived INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS games(
+  id TEXT PRIMARY KEY,
+  played_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS results(
+  game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  player_id TEXT NOT NULL REFERENCES players(id),
+  rank INTEGER NOT NULL CHECK(rank BETWEEN 1 AND 4),
+  score INTEGER NOT NULL,
+  PRIMARY KEY(game_id, player_id),
+  UNIQUE(game_id, rank)
+);
+CREATE INDEX IF NOT EXISTS results_player ON results(player_id);
+CREATE INDEX IF NOT EXISTS games_played ON games(played_at, created_at);
+CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS admin_sessions(token TEXT PRIMARY KEY,expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS admin_attempts(ip TEXT PRIMARY KEY,count INTEGER NOT NULL,reset_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS access_sessions(token TEXT PRIMARY KEY,expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS access_attempts(ip TEXT PRIMARY KEY,count INTEGER NOT NULL,reset_at INTEGER NOT NULL);

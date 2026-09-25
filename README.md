@@ -33,3 +33,18 @@ node --test tests/test_stats.js
 ```
 
 ブラウザテストを実行する場合だけ、`npm install` と `npx playwright install chrome` を実行します。
+
+## Cloudflareへデプロイ
+
+公開版はCloudflare WorkersとD1を使用します。静的画面は `public/`、Workers APIは `worker/index.js`、D1の初期構造は `migrations/` にあります。
+
+```sh
+npm install
+npx wrangler login
+npm run db:migrate:remote
+python3 scripts/export_d1.py
+npx wrangler d1 execute DB --remote --file data/d1-import.sql --yes
+npm run deploy
+```
+
+`scripts/export_d1.py` はローカルSQLiteからメンバー、対局、結果、管理者PIN・共通PINのハッシュだけを移行用SQLへ出力します。ログインセッションとPIN入力履歴は移行しません。生成ファイルは `data/` 内に保存され、Gitには追加されません。

@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "runteq-unofficial-mahjong-results",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-25",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "runteq-unofficial-mahjong-results-db",
+      "database_id": "8b3a03e0-499b-4b25-a316-e68ad2ee5629",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
