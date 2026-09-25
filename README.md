@@ -4,6 +4,8 @@ RUNTEQ非公式麻雀サークルの四人麻雀・半荘の順位と終了時�
 
 画面内の「らんてくん」画像は、[RUNTEQ公式ブログ](https://runteq.jp/blog/programing_school/teacher/1059/)掲載素材を使用しています。
 
+公開URL: https://runteq-unofficial-mahjong-results.runteq-mahjong-circle.workers.dev
+
 ## 起動
 
 ```sh
