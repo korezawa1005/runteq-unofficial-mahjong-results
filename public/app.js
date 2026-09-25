@@ -286,6 +286,7 @@ function renderMembers() {
   document.querySelector('#admin-login')?.addEventListener('submit', loginAdmin);
   document.querySelector('#admin-logout')?.addEventListener('click', logoutAdmin);
   document.querySelector('#member-form')?.addEventListener('submit', saveMember);
+  document.querySelector('#admin-pin-form')?.addEventListener('submit', changeAdminPin);
   document.querySelector('#access-pin-form')?.addEventListener('submit', saveAccessPin);
   document.querySelector('#download-backup')?.addEventListener('click', downloadBackup);
   document.querySelector('#restore-file')?.addEventListener('change', previewRestore);
@@ -298,6 +299,7 @@ function adminPanel() {
   if (!state.adminConfigured) return `<form id="admin-setup" class="panel member-form"><p class="eyebrow">FIRST SETUP</p><h2>管理者PINを設定</h2><p class="admin-help">管理操作に使う4〜12桁の数字を決めてください。</p><label class="field"><span>管理者PIN</span><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,12}" minlength="4" maxlength="12" autocomplete="new-password" required></label><button class="button primary" type="submit">PINを設定する</button></form>`;
   if (!state.isAdmin) return `<form id="admin-login" class="panel member-form"><p class="eyebrow">ADMIN</p><h2>管理者ロック</h2><p class="admin-help">メンバーや対局を管理するときだけ解除します。</p><label class="field"><span>管理者PIN</span><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,12}" maxlength="12" autocomplete="current-password" required></label><button class="button primary" type="submit">ロックを解除</button></form>`;
   return `<form id="member-form" class="panel member-form"><div class="admin-panel-head"><div><p class="eyebrow">ADMIN</p><h2>新しいメンバー</h2></div><button id="admin-logout" type="button">ロックする</button></div><label class="field"><span>名前</span><input name="name" maxlength="20" placeholder="例：NEET" required></label><button class="button primary" type="submit">登録する</button></form>
+    <form id="admin-pin-form" class="panel member-form"><p class="eyebrow">ADMIN SECURITY</p><h2>管理者PINを変更</h2><p class="admin-help">変更後はほかの端末の管理者ログインが解除されます。</p><label class="field"><span>新しい管理者PIN</span><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,12}" minlength="4" maxlength="12" autocomplete="new-password" required></label><button class="button secondary" type="submit">管理者PINを変更</button></form>
     <form id="access-pin-form" class="panel member-form"><p class="eyebrow">GROUP ACCESS</p><h2>共通PIN</h2><p class="admin-help">URLを知っている仲間だけが入れるようにする4〜12桁の数字です。${state.accessConfigured ? '現在は設定済みです。' : ''}</p><label class="field"><span>${state.accessConfigured ? '新しい共通PIN' : '共通PIN'}</span><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,12}" minlength="4" maxlength="12" required></label><button class="button secondary" type="submit">${state.accessConfigured ? '共通PINを変更' : '共通PINを設定'}</button></form>
     <section class="panel member-form backup-panel"><p class="eyebrow">BACKUP</p><h2>バックアップ・復元</h2><p class="admin-help">全メンバーと対局をJSONで保存します。PINは含みません。</p><button id="download-backup" class="button secondary" type="button">バックアップを保存</button><label class="file-field"><span>復元するファイル</span><input id="restore-file" type="file" accept="application/json,.json"></label><p id="restore-preview" class="restore-preview">ファイルを選ぶと件数を確認できます。</p><button id="restore-backup" class="button danger" type="button" disabled>この内容で復元</button></section>`;
 }
@@ -337,6 +339,16 @@ async function saveAccessPin(event) {
   event.preventDefault();
   try { await api('/api/admin/access-pin', {method:'POST', body:JSON.stringify({pin:event.currentTarget.pin.value})}); await refreshState(); notify('共通PINを保存しました。'); renderMembers(); }
   catch (error) { notify(error.message, true); }
+}
+
+async function changeAdminPin(event) {
+  event.preventDefault();
+  try {
+    await api('/api/admin/change-pin', {method:'POST', body:JSON.stringify({pin:event.currentTarget.pin.value})});
+    await refreshState();
+    notify('管理者PINを変更しました。');
+    renderMembers();
+  } catch (error) { notify(error.message, true); }
 }
 
 async function savePlayer(event) {

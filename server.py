@@ -431,6 +431,14 @@ class Handler(BaseHTTPRequestHandler):
                     db.execute("DELETE FROM access_sessions")
                     self.create_access_session(db)
                     return self.send_json(200, {"ok": True})
+                if path == "/api/admin/change-pin" and self.command == "POST":
+                    self.require_admin(db)
+                    body = read_json(self)
+                    hashed = pin_hash(body.get("pin"))
+                    db.execute("UPDATE settings SET value=? WHERE key='admin_pin'", (hashed,))
+                    db.execute("DELETE FROM admin_sessions")
+                    self.create_admin_session(db)
+                    return self.send_json(200, {"ok": True})
                 self.require_access(db)
                 if path == "/api/players" and self.command == "POST":
                     self.require_admin(db)

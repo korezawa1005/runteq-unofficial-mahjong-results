@@ -269,6 +269,18 @@ async function handleApi(request, env) {
     ]);
     return json(200, {ok:true}, [sessionCookie(request, 'hanchan_access', token)]);
   }
+  if (path === '/api/admin/change-pin' && method === 'POST') {
+    requireAdmin(auth);
+    const body = await readJson(request);
+    const hashed = await pinHash(body.pin);
+    const token = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+    await env.DB.batch([
+      env.DB.prepare("UPDATE settings SET value=? WHERE key='admin_pin'").bind(hashed),
+      env.DB.prepare('DELETE FROM admin_sessions'),
+      env.DB.prepare('INSERT INTO admin_sessions(token,expires) VALUES(?,?)').bind(await tokenHash(token), unixTime() + SESSION_SECONDS),
+    ]);
+    return json(200, {ok:true}, [sessionCookie(request, 'hanchan_admin', token)]);
+  }
 
   requireAccess(auth);
   if (path === '/api/players' && method === 'POST') {

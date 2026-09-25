@@ -25,6 +25,12 @@ python3 start_local.py
 
 バックアップには全メンバーと全対局が含まれます。管理者PIN、共通PIN、ログイン情報は含まれません。
 
+管理者モードでは、メンバー画面から管理者PINを変更できます。現在のPINを忘れてログインできない場合は、ターミナルで次を実行すると、本番D1のPINを安全にリセットできます。
+
+```sh
+python3 scripts/reset_admin_pin.py
+```
+
 ## テスト
 
 変更内容に応じた確認範囲は [DEVELOPMENT.md](DEVELOPMENT.md) に記載しています。
