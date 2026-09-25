@@ -16,12 +16,12 @@ def main():
     if not re.fullmatch(r"[0-9]{4,12}", pin):
         raise SystemExit("管理者PINは4〜12桁の数字で入力してください。")
     salt = secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", pin.encode(), bytes.fromhex(salt), 300_000).hex()
+    digest = hashlib.pbkdf2_hmac("sha256", pin.encode(), bytes.fromhex(salt), 100_000).hex()
     sql_file = ROOT / "data" / ".reset-admin-pin.sql"
     sql_file.write_text(
         "INSERT INTO settings(key,value) VALUES('admin_pin','"
         + salt + ":" + digest
-        + "') ON CONFLICT(key) DO UPDATE SET value=excluded.value;\nDELETE FROM admin_sessions;\n",
+        + "') ON CONFLICT(key) DO UPDATE SET value=excluded.value;\nDELETE FROM admin_sessions;\nDELETE FROM admin_attempts;\n",
         encoding="utf-8",
     )
     try:

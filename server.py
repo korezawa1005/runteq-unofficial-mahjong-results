@@ -93,7 +93,7 @@ def pin_hash(pin, salt=None, label="管理者PIN"):
     if not isinstance(pin, str) or not re.fullmatch(r"[0-9]{4,12}", pin):
         raise AppError(400, f"{label}は4〜12桁の数字で入力してください。")
     salt = salt or secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", pin.encode(), bytes.fromhex(salt), 300_000).hex()
+    digest = hashlib.pbkdf2_hmac("sha256", pin.encode(), bytes.fromhex(salt), 100_000).hex()
     return f"{salt}:{digest}"
 
 

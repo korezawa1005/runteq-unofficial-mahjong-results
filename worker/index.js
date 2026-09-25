@@ -10,6 +10,12 @@ const SESSION_SECONDS = 60 * 60 * 24 * 30;
 
 const bytesToHex = bytes => [...new Uint8Array(bytes)].map(value => value.toString(16).padStart(2, '0')).join('');
 const hexToBytes = hex => new Uint8Array(hex.match(/.{2}/g)?.map(value => parseInt(value, 16)) || []);
+const timingSafeEqual = (left, right) => {
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference |= left[index] ^ right[index];
+  return difference === 0;
+};
 const now = () => new Date().toISOString();
 const unixTime = () => Math.floor(Date.now() / 1000);
 const uid = () => bytesToHex(crypto.getRandomValues(new Uint8Array(12)));
@@ -53,7 +59,7 @@ async function pinHash(pin, label = '管理者PIN', saltHex = null) {
   if (typeof pin !== 'string' || !/^[0-9]{4,12}$/.test(pin)) throw new AppError(400, `${label}は4〜12桁の数字で入力してください。`);
   const salt = saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey('raw', encoder.encode(pin), 'PBKDF2', false, ['deriveBits']);
-  const digest = await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt, iterations:300_000}, key, 256);
+  const digest = await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt, iterations:100_000}, key, 256);
   return `${bytesToHex(salt)}:${bytesToHex(digest)}`;
 }
 
@@ -61,7 +67,7 @@ async function verifyPin(pin, stored) {
   try {
     const [salt, expected] = stored.split(':', 2);
     const actual = (await pinHash(pin, 'PIN', salt)).split(':', 2)[1];
-    return crypto.subtle.timingSafeEqual(hexToBytes(actual), hexToBytes(expected));
+    return timingSafeEqual(hexToBytes(actual), hexToBytes(expected));
   } catch {
     return false;
   }
