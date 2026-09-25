@@ -35,7 +35,7 @@ try {
   await page.locator('#admin-login [name=pin]').fill('2468');
   await page.locator('#admin-login button[type=submit]').click();
   await page.waitForSelector('#member-form');
-  await page.click('a[href="#record"]');
+  await page.click('a[href="#history"]');
   await page.waitForSelector('[data-delete]');
 
   const outsider = await browser.newContext();

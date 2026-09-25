@@ -54,6 +54,45 @@ class DatabaseTests(unittest.TestCase):
         self.assertIn("archived", columns)
         server.DB_PATH = old_path
 
+    def seed_players(self):
+        with server.connect() as db:
+            ids = []
+            for name in "ABCD":
+                ident = server.uid()
+                ids.append(ident)
+                db.execute("INSERT INTO players(id,name,created_at) VALUES(?,?,?)", (ident, name, server.now()))
+        return ids
+
+    def test_result_validation_accepts_ties_and_rejects_rank_score_conflict(self):
+        ids = self.seed_players()
+        tied = [
+            {"player_id": ids[0], "rank": 1, "score": 35000},
+            {"player_id": ids[1], "rank": 2, "score": 35000},
+            {"player_id": ids[2], "rank": 3, "score": 20000},
+            {"player_id": ids[3], "rank": 4, "score": 10000},
+        ]
+        with server.connect() as db:
+            self.assertEqual(len(server.validate_results(db, tied)), 4)
+            tied[0]["score"], tied[1]["score"] = 30000, 40000
+            with self.assertRaisesRegex(server.AppError, "点数と順位"):
+                server.validate_results(db, tied)
+
+    def test_backup_contains_records_but_not_pin_settings(self):
+        ids = self.seed_players()
+        with server.connect() as db:
+            db.execute("INSERT INTO settings VALUES('admin_pin','secret-hash')")
+            game_id = server.uid()
+            db.execute("INSERT INTO games VALUES(?,?,?)", (game_id, "2026-09-25T12:00", server.now()))
+            scores = [40000, 30000, 20000, 10000]
+            db.executemany("INSERT INTO results VALUES(?,?,?,?)", [(game_id, ident, rank, scores[rank - 1]) for rank, ident in enumerate(ids, 1)])
+            backup = server.backup_data(db)
+        self.assertEqual(backup["format"], "runteq-mahjong-backup")
+        self.assertEqual(len(backup["players"]), 4)
+        self.assertEqual(len(backup["games"]), 1)
+        self.assertNotIn("settings", backup)
+        players, games = server.validate_backup(backup)
+        self.assertEqual((len(players), len(games)), (4, 1))
+
 
 if __name__ == "__main__":
     unittest.main()
