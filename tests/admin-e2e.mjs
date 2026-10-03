@@ -46,8 +46,20 @@ try {
   assert.equal(await page.locator('a[href="#record"]').isVisible(), true);
   await page.click('a[href="#record"]');
   await page.waitForSelector('#game-form');
+  const firstPlayedAt = await page.locator('#game-form [name=played_at]').inputValue();
   await page.locator('#game-form button[type=submit]').click();
+  await page.waitForSelector('#game-confirmation[open]');
+  assert.equal(await page.locator('.confirmation-results > div').count(), 4);
+  assert.equal(await page.locator('.duplicate-warning').count(), 0);
+  await page.locator('#confirm-game-save').click();
   await page.waitForSelector('.stats-grid');
+  assert.equal(await page.locator('.today-summary h2').textContent(), '本日の成績');
+  assert.equal(await page.locator('.today-table tbody tr').count(), 4);
+  await page.click('a[href="#record"]');
+  await page.locator('#game-form [name=played_at]').fill(firstPlayedAt);
+  await page.locator('#game-form button[type=submit]').click();
+  await page.waitForSelector('.duplicate-warning');
+  await page.locator('.confirmation-actions button[value=cancel]').click();
   await page.click('a[href="#history"]');
   await page.waitForSelector('[data-delete]');
 
@@ -57,7 +69,7 @@ try {
   });
   assert.equal(response.status(), 403);
   await outsider.close();
-  console.log('管理者権限ブラウザテスト: 13項目 OK');
+  console.log('管理者権限・対局確認ブラウザテスト: 18項目 OK');
 } finally {
   await browser.close();
 }

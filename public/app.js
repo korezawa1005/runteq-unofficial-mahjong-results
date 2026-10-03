@@ -100,6 +100,7 @@ function renderStats() {
       <div class="head-filters">${yearControl(year)}${view === 'personal' ? `<label class="filter-control"><span>メンバー</span><select id="stats-player">${state.players.map(item => `<option value="${item.id}" ${item.id === player.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label>` : ''}</div>
     </section>
     <div class="view-switch" role="group" aria-label="成績表示"><a class="${view === 'personal' ? 'active' : ''}" href="#${queryHash('stats', {year, player: player.id})}">個人成績</a><a class="${view === 'list' ? 'active' : ''}" href="#${queryHash('stats', {view: 'list', year, sort})}">ランキング</a></div>
+    ${todaySummaryView()}
     ${view === 'list' ? comparisonView(games, year, sort) : personalView(player, games)}
   `;
   document.querySelector('#year-filter').addEventListener('change', event => {
@@ -108,6 +109,23 @@ function renderStats() {
   document.querySelector('#stats-player')?.addEventListener('change', event => {
     location.hash = queryHash('stats', {year, player: event.target.value});
   });
+}
+
+function todaySummaryView() {
+  const today = localNow().slice(0, 10);
+  const games = state.games.filter(game => game.played_at.slice(0, 10) === today);
+  const label = new Date(`${today}T00:00`).toLocaleDateString('ja-JP', {month:'long', day:'numeric'});
+  const rows = state.players
+    .map(player => summarize(player, games))
+    .filter(stats => stats.count)
+    .sort((a, b) => a.averageRank - b.averageRank || b.ranks[0] - a.ranks[0] || b.count - a.count || a.player.name.localeCompare(b.player.name, 'ja'));
+  if (!rows.length) {
+    const action = state.isAdmin ? '<a class="button secondary" href="#record">対局を記録</a>' : '';
+    return `<section class="panel today-summary today-empty"><div><p class="eyebrow">TODAY</p><h2>本日の成績</h2><p>${label}の対局はまだありません。</p></div>${action}</section>`;
+  }
+  return `<section class="panel today-summary"><div class="panel-title"><div><p class="eyebrow">TODAY</p><h2>本日の成績</h2></div><span>${label}・${games.length}半荘</span></div>
+    <div class="table-scroll"><table class="today-table"><thead><tr><th>メンバー</th><th>半荘数</th><th>平均着順</th><th>1位</th></tr></thead><tbody>${rows.map(stats => `<tr><th><a href="#${queryHash('stats', {player:stats.player.id, year:today.slice(0,4)})}">${esc(stats.player.name)}</a></th><td>${stats.count}</td><td><strong>${rankValue(stats.averageRank)}</strong>位</td><td>${stats.ranks[0]}回</td></tr>`).join('')}</tbody></table></div>
+  </section>`;
 }
 
 function personalView(player, games) {
@@ -178,8 +196,8 @@ function gameForm(game = null) {
     <p id="score-order-error" class="form-error" role="alert" hidden>点数と順位が一致していません。高い点数の人を上位にしてください。</p>
     <p id="tie-note" class="form-note" hidden>同点のため順位を確認してください。上の行のメンバーを上位として記録します。</p>
     <div class="score-total">点数合計 <strong id="score-total">100,000点</strong><span>（100,000点にしてください）</span></div>
-    <div class="form-actions">${game ? '<a class="button secondary" href="#history">キャンセル</a>' : ''}<button class="button primary submit" type="submit">${game ? '変更を保存' : 'この結果を記録'}</button></div>
-  </form>`;
+    <div class="form-actions">${game ? '<a class="button secondary" href="#history">キャンセル</a>' : ''}<button class="button primary submit" type="submit">${game ? '変更内容を確認' : '入力内容を確認'}</button></div>
+  </form><dialog id="game-confirmation" class="game-confirmation"></dialog>`;
 }
 
 function renderRecord() {
@@ -228,7 +246,7 @@ function bindGameForm() {
     validate();
     notify('前回の4人を選択しました。');
   });
-  form.addEventListener('submit', saveGame);
+  form.addEventListener('submit', reviewGame);
   validate();
 }
 
@@ -244,20 +262,53 @@ function recentGamesView() {
   return `<section class="history"><div class="panel-title"><div><p class="eyebrow">RECENT GAMES</p><h2>最近の対局</h2></div><a href="#history">すべて見る</a></div>${state.games.slice(0, 5).map(game => formatGame(game, false)).join('')}</section>`;
 }
 
-async function saveGame(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
+function gamePayload(form) {
   const players = [...form.querySelectorAll('[name=player]')];
   const scores = [...form.querySelectorAll('[name=score]')];
+  return {
+    played_at: form.played_at.value,
+    results: players.map((input, index) => ({player_id: input.value, rank: index + 1, score: Number(scores[index].value)})),
+  };
+}
+
+function duplicateGame(payload, currentGameId) {
+  const key = results => results.map(result => result.player_id).sort().join('|');
+  const playerKey = key(payload.results);
+  return state.games.find(game => game.id !== currentGameId && game.played_at === payload.played_at && key(game.results) === playerKey);
+}
+
+function reviewGame(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
   const gameId = form.dataset.gameId;
-  const button = form.querySelector('[type=submit]');
+  const payload = gamePayload(form);
+  const duplicate = duplicateGame(payload, gameId);
+  const dialog = document.querySelector('#game-confirmation');
+  const playedAt = new Date(payload.played_at).toLocaleString('ja-JP', {year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  dialog.innerHTML = `<form method="dialog"><div class="confirmation-head"><div><p class="eyebrow">FINAL CHECK</p><h2>${gameId ? '変更内容の確認' : '対局結果の確認'}</h2></div><button class="dialog-close" value="cancel" aria-label="閉じる">×</button></div>
+    <p class="confirmation-date">${playedAt}</p>
+    ${duplicate ? '<p class="duplicate-warning" role="alert"><strong>重複の可能性があります</strong><span>同じ日時・同じ4人の対局がすでに登録されています。内容を確認してください。</span></p>' : ''}
+    <div class="confirmation-results">${payload.results.map(result => {
+      const player = state.players.find(item => item.id === result.player_id);
+      return `<div><span class="rank-badge rank-${result.rank}">${result.rank}<small>位</small></span><strong>${esc(player?.name || '不明')}</strong><em>${number(result.score)}点</em></div>`;
+    }).join('')}</div>
+    <p class="confirmation-total">点数合計 <strong>${number(payload.results.reduce((sum, result) => sum + result.score, 0))}点</strong></p>
+    <div class="confirmation-actions"><button class="button secondary" value="cancel">入力画面に戻る</button><button id="confirm-game-save" class="button primary" value="default" type="button">${duplicate ? '確認して保存' : (gameId ? 'この内容で変更' : 'この内容で記録')}</button></div></form>`;
+  dialog.querySelector('#confirm-game-save').addEventListener('click', () => persistGame(form, payload, dialog));
+  dialog.showModal();
+}
+
+async function persistGame(form, payload, dialog) {
+  const gameId = form.dataset.gameId;
+  const players = [...form.querySelectorAll('[name=player]')];
+  const button = dialog.querySelector('#confirm-game-save');
   button.disabled = true;
   try {
-    const payload = {played_at: form.played_at.value, results: players.map((input, index) => ({player_id: input.value, rank: index + 1, score: Number(scores[index].value)}))};
     await api(gameId ? `/api/games/${gameId}` : '/api/games', {method: gameId ? 'PATCH' : 'POST', body: JSON.stringify(payload)});
+    dialog.close();
     await refreshState();
     notify(gameId ? '対局結果を変更しました。' : '対局結果を記録しました。');
-    location.hash = gameId ? 'history' : `stats?player=${players[0].value}&year=${form.played_at.value.slice(0,4)}`;
+    location.hash = gameId ? 'history' : `stats?player=${players[0].value}&year=${payload.played_at.slice(0,4)}`;
   } catch (error) { notify(error.message, true); button.disabled = false; }
 }
 
