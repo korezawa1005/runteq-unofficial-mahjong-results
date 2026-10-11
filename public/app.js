@@ -134,14 +134,28 @@ function personalView(player, games) {
   return stats.count ? statsView(stats, games) : empty(`${esc(player.name)}さんの記録はありません`, '選択した期間に管理者が半荘を記録すると、ここに成績が表示されます。', action);
 }
 
-function card(label, value, suffix = '') {
-  return `<article class="stat-card"><span>${label}</span><strong>${value}<small>${suffix}</small></strong></article>`;
+function summaryMetric(label, value, suffix) {
+  return `<article><span>${label}</span><strong>${value}<small>${suffix}</small></strong></article>`;
+}
+
+function rateGauge(label, value, note, color) {
+  const gaugeValue = Math.max(0, Math.min(100, value ?? 0));
+  return `<article class="rate-gauge" style="--gauge-value:${gaugeValue};--gauge-color:${color}">
+    <span>${label}</span><div class="gauge-ring" role="img" aria-label="${label} ${percent(value)}"><div class="gauge-value"><strong>${value?.toFixed(2) ?? '—'}<small>${value == null ? '' : '%'}</small></strong></div></div><small>${note}</small>
+  </article>`;
 }
 
 function statsView(stats, games) {
   const colors = ['#2f7650', '#3274a1', '#d97918', '#b24751'];
-  return `<section class="stats-grid">
-      ${card('ゲーム数', number(stats.count), '回')}${card('トップ回数', number(stats.ranks[0]), '回')}${card('トップ率', percent(stats.topRate))}${card('平均着順', rankValue(stats.averageRank), '位')}${card('ラス回避率', percent(stats.avoidLastRate))}${card('連対率', percent(stats.rentaiRate))}${card('飛び回避率', percent(stats.avoidBustRate))}
+  return `<section class="player-dashboard">
+      <div class="dashboard-head"><div><p class="eyebrow">PLAYER STATUS</p><h2>${esc(stats.player.name)}の個人成績</h2></div><span class="dashboard-status"><i></i>集計済み</span></div>
+      <div class="dashboard-mini">${summaryMetric('ゲーム数', number(stats.count), '半荘')}${summaryMetric('トップ回数', number(stats.ranks[0]), '回')}${summaryMetric('平均着順', rankValue(stats.averageRank), '位')}</div>
+      <div class="gauge-grid">
+        ${rateGauge('トップ率', stats.topRate, '1位の割合', '#ff7a00')}
+        ${rateGauge('連対率', stats.rentaiRate, '1・2位の割合', '#39a7ff')}
+        ${rateGauge('ラス回避率', stats.avoidLastRate, '4位以外の割合', '#59d295')}
+        ${rateGauge('飛び回避率', stats.avoidBustRate, '0点以上の割合', '#a98cff')}
+      </div>
     </section>
     ${rankTrend(stats.player, games)}
     <section class="panel rank-panel"><div class="panel-title"><div><p class="eyebrow">RANK DISTRIBUTION</p><h2>着順の内訳</h2></div><span>${stats.count}半荘</span></div>

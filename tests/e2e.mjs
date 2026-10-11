@@ -19,7 +19,8 @@ try {
 
   const mobile = await browser.newPage({viewport: {width: 390, height: 844}});
   await mobile.goto('http://127.0.0.1:8010/#stats', {waitUntil: 'networkidle'});
-  assert.equal(await mobile.locator('.stat-card').count(), 7);
+  assert.equal(await mobile.locator('.dashboard-mini article').count(), 3);
+  assert.equal(await mobile.locator('.rate-gauge').count(), 4);
   await mobile.screenshot({path: '/private/tmp/hanchan-mobile.png', fullPage: true});
   console.log('ブラウザテスト: 6項目 OK');
 } finally {

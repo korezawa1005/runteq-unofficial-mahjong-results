@@ -60,7 +60,7 @@ try {
   assert.equal(await page.locator('.confirmation-results > div').count(), 4);
   assert.equal(await page.locator('.duplicate-warning').count(), 0);
   await page.locator('#confirm-game-save').click();
-  await page.waitForSelector('.stats-grid');
+  await page.waitForSelector('.player-dashboard');
   assert.equal(await page.locator('.today-summary h2').textContent(), '本日の成績');
   assert.equal(await page.locator('.today-table tbody tr').count(), 4);
   await page.click('a[href="#record"]');
