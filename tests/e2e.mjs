@@ -15,7 +15,7 @@ try {
   assert.equal(await desktop.locator('.result-row').count(), 4);
   assert.equal(await desktop.locator('#score-total').textContent(), '100,000点');
   const firstPlayer = await desktop.locator('[name="player"]').first().inputValue();
-  assert.equal(await desktop.locator('[name="player"]').nth(1).locator(`option[value="${firstPlayer}"]`).evaluate(option => option.disabled), true);
+  assert.equal(await desktop.locator('[name="player"]').nth(1).locator(`option[value="${firstPlayer}"]`).evaluate(option => option.disabled), false);
 
   const mobile = await browser.newPage({viewport: {width: 390, height: 844}});
   await mobile.goto('http://127.0.0.1:8010/#stats', {waitUntil: 'networkidle'});

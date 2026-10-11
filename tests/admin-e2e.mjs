@@ -47,6 +47,14 @@ try {
   await page.click('a[href="#record"]');
   await page.waitForSelector('#game-form');
   const firstPlayedAt = await page.locator('#game-form [name=played_at]').inputValue();
+  const firstPlayer = await page.locator('#game-form [name=player]').nth(0).inputValue();
+  const secondPlayer = await page.locator('#game-form [name=player]').nth(1).inputValue();
+  assert.equal(await page.locator('#game-form [name=player]').nth(1).locator(`option[value="${firstPlayer}"]`).evaluate(option => option.disabled), false);
+  await page.locator('#game-form [name=player]').nth(1).selectOption(firstPlayer);
+  await page.locator('#game-form button[type=submit]').click();
+  await page.waitForSelector('#player-error:not([hidden])');
+  assert.equal(await page.locator('#game-confirmation[open]').count(), 0);
+  await page.locator('#game-form [name=player]').nth(1).selectOption(secondPlayer);
   await page.locator('#game-form button[type=submit]').click();
   await page.waitForSelector('#game-confirmation[open]');
   assert.equal(await page.locator('.confirmation-results > div').count(), 4);
@@ -69,7 +77,7 @@ try {
   });
   assert.equal(response.status(), 403);
   await outsider.close();
-  console.log('管理者権限・対局確認ブラウザテスト: 18項目 OK');
+  console.log('管理者権限・対局確認ブラウザテスト: 21項目 OK');
 } finally {
   await browser.close();
 }

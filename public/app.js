@@ -223,11 +223,7 @@ function bindGameForm() {
   const validate = () => {
     const selected = playerSelects.map(select => select.value);
     const duplicated = new Set(selected).size !== selected.length;
-    playerSelects.forEach(select => {
-      [...select.options].forEach(option => option.disabled = option.value !== select.value && selected.includes(option.value));
-      select.setCustomValidity(duplicated ? '同じメンバーを重複して選択できません。' : '');
-    });
-    document.querySelector('#player-error').hidden = !duplicated;
+    if (!duplicated) document.querySelector('#player-error').hidden = true;
     const scores = scoreInputs.map(input => Number(input.value || 0));
     const total = scores.reduce((sum, score) => sum + score, 0);
     const wrongOrder = scores.some((score, index) => index < 3 && score < scores[index + 1]);
@@ -237,7 +233,7 @@ function bindGameForm() {
     output.classList.toggle('invalid', total !== 100000);
     document.querySelector('#score-order-error').hidden = !wrongOrder;
     document.querySelector('#tie-note').hidden = !tied || wrongOrder;
-    submitButton.disabled = duplicated || total !== 100000 || wrongOrder;
+    submitButton.disabled = total !== 100000 || wrongOrder;
   };
   playerSelects.forEach(select => select.addEventListener('change', validate));
   scoreInputs.forEach(input => input.addEventListener('input', validate));
@@ -282,6 +278,15 @@ function reviewGame(event) {
   const form = event.currentTarget;
   const gameId = form.dataset.gameId;
   const payload = gamePayload(form);
+  const playerSelects = [...form.querySelectorAll('[name=player]')];
+  const selected = payload.results.map(result => result.player_id);
+  const repeatedIndex = selected.findIndex((playerId, index) => selected.indexOf(playerId) !== index);
+  if (repeatedIndex >= 0) {
+    form.querySelector('#player-error').hidden = false;
+    playerSelects[repeatedIndex].focus();
+    notify('同じメンバーが選ばれています。4人を別々に選択してください。', true);
+    return;
+  }
   const duplicate = duplicateGame(payload, gameId);
   const dialog = document.querySelector('#game-confirmation');
   const playedAt = new Date(payload.played_at).toLocaleString('ja-JP', {year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'});
