@@ -100,8 +100,8 @@ function renderStats() {
       <div class="head-filters">${yearControl(year)}${view === 'personal' ? `<label class="filter-control"><span>メンバー</span><select id="stats-player">${state.players.map(item => `<option value="${item.id}" ${item.id === player.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label>` : ''}</div>
     </section>
     <div class="view-switch" role="group" aria-label="成績表示"><a class="${view === 'personal' ? 'active' : ''}" href="#${queryHash('stats', {year, player: player.id})}">個人成績</a><a class="${view === 'list' ? 'active' : ''}" href="#${queryHash('stats', {view: 'list', year, sort})}">ランキング</a></div>
-    ${todaySummaryView()}
     ${view === 'list' ? comparisonView(games, year, sort) : personalView(player, games)}
+    ${todaySummaryView()}
   `;
   document.querySelector('#year-filter').addEventListener('change', event => {
     location.hash = queryHash('stats', {view: view === 'list' ? 'list' : null, year: event.target.value, player: view === 'personal' ? player.id : null, sort: view === 'list' ? sort : null});
